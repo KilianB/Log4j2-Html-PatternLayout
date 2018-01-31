@@ -28,13 +28,13 @@ import org.apache.logging.log4j.util.Strings;
 /**
  * Outputs log messages in an HTML table while granting the entire flexibility
  * of using pattern layouts.
+ * 
  * @author Kilian
  *
  */
 @Plugin(name = "PatternHtmlLayout", category = Node.CATEGORY, elementType = Layout.ELEMENT_TYPE, printObject = true)
 public class PatternHtmlLayout extends AbstractStringLayout {
 
-	
 	/**
 	 * Default font family: {@value}.
 	 */
@@ -43,25 +43,23 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 	private static final String TRACE_PREFIX = "<br />&nbsp;&nbsp;&nbsp;&nbsp;";
 	private static final String DEFAULT_TITLE = "Log4j Log Messages";
 	private static final String DEFAULT_CONTENT_TYPE = "text/html";
-	
+
 	public static final String DEFAULT_CONVERSION_PATTERN = "%m%n";
 
-	// Print no location info by default
 	private final String title;
 	private final String contentType;
 	private final String font;
 	private final String headerSize;
-	private final String[] header;	//table headers
-	
-	private final boolean omitStyle; //Ignore all styling options and return plain html;
-	private final String tableCSSClass; //Append class name to table tag
-	
-	String pattern;
+	private final String[] header; // table headers
+
+	private final boolean omitStyle; // Ignore all styling options and return plain html;
+	private final String tableCSSClass; // Append class name to table tag
+
+	private String pattern;
 	private PatternParser patternParser;
 	private final PatternFormatter[] formatters;
-	private final boolean[]	lineBreakFormater;
-	
-	
+	private final boolean[] lineBreakFormater;
+
 	/** Possible font sizes */
 	public static enum FontSize {
 		SMALLER("smaller"), XXSMALL("xx-small"), XSMALL("x-small"), SMALL("small"), MEDIUM("medium"), LARGE(
@@ -91,11 +89,11 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		}
 	}
 
-	private PatternHtmlLayout(final String title, final String contentType,
-			final Charset charset, final String font, final String fontSize, final String headerSize, final String header,
-			//Pattern layout
-			final Configuration config, final String eventPattern,final boolean alwaysWriteExceptions,
-            final boolean disableAnsi, final boolean noConsoleNoAnsi, boolean omitStyle,String tableCSSClass) {
+	private PatternHtmlLayout(final String title, final String contentType, final Charset charset, final String font,
+			final String fontSize, final String headerSize, final String header,
+			// Pattern layout
+			final Configuration config, final String eventPattern, final boolean alwaysWriteExceptions,
+			final boolean disableAnsi, final boolean noConsoleNoAnsi, boolean omitStyle, String tableCSSClass) {
 		super(charset);
 		this.title = title;
 		this.contentType = addCharsetToContentType(contentType);
@@ -104,32 +102,32 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		this.header = header.split(",");
 		this.omitStyle = omitStyle;
 		this.tableCSSClass = tableCSSClass == null ? "" : tableCSSClass;
-		//Remove quotes
+		// Remove quotes
 		this.header[0] = this.header[0].substring(1);
 		int length = this.header.length;
-		this.header[length-1] = this.header[length-1].substring(0, this.header[length-1].length()-1);
-		
-		this.pattern =  eventPattern;
-		
-		patternParser = new PatternParser(config,"Converter",LogEventPatternConverter.class);
+		this.header[length - 1] = this.header[length - 1].substring(0, this.header[length - 1].length() - 1);
+
+		this.pattern = eventPattern;
+
+		patternParser = new PatternParser(config, "Converter", LogEventPatternConverter.class);
 		if (patternParser == null) {
 			patternParser = new PatternParser(config, "Converter", LogEventPatternConverter.class);
-            config.addComponent("Converter", patternParser);
-            patternParser = config.getComponent("Converter");
-        }
+			config.addComponent("Converter", patternParser);
+			patternParser = config.getComponent("Converter");
+		}
 
-		List<PatternFormatter> patternFormatter = patternParser.parse(eventPattern, alwaysWriteExceptions, disableAnsi, noConsoleNoAnsi);
+		List<PatternFormatter> patternFormatter = patternParser.parse(eventPattern, alwaysWriteExceptions, disableAnsi,
+				noConsoleNoAnsi);
 		formatters = patternFormatter.toArray(new PatternFormatter[0]);
 		lineBreakFormater = new boolean[formatters.length];
-		
-		for(int i = 0; i < formatters.length; i++) {
-			if(formatters[i].getConverter().getName().equals("TablePatternConverter")) {
+
+		for (int i = 0; i < formatters.length; i++) {
+			if (formatters[i].getConverter().getName().equals("TablePatternConverter")) {
 				lineBreakFormater[i] = true;
 			}
 		}
-		
-	}
 
+	}
 
 	private String addCharsetToContentType(final String contentType) {
 		if (contentType == null) {
@@ -147,34 +145,32 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 	 */
 	@Override
 	public String toSerializable(final LogEvent event) {
-		
-		//Omit empty messages. No reason to log.
-		if(event.getMessage().getFormattedMessage().isEmpty())
+
+		// Omit empty messages. No reason to log.
+		if (event.getMessage().getFormattedMessage().isEmpty())
 			return "";
-		
+
 		final StringBuilder sbuf = getStringBuilder();
-		
+
 		StringBuilder newSb = new StringBuilder();
-		
+
 		sbuf.append(Strings.LINE_SEPARATOR).append("<tr>");
 		sbuf.append(Strings.LINE_SEPARATOR).append("<td>");
-		
-		
-		//Escape all non tr tags
+
+		// Escape all non tr tags
 		for (int i = 0; i < formatters.length; i++) {
-			formatters[i].format(event,newSb);
-			
-			if(!lineBreakFormater[i]) {
+			formatters[i].format(event, newSb);
+
+			if (!lineBreakFormater[i]) {
 				sbuf.append(Transform.escapeHtmlTags(newSb.toString()));
-			 }else {
+			} else {
 				sbuf.append(newSb.toString());
-			 }
+			}
 			newSb.setLength(0);
-         }
-		
+		}
+
 		sbuf.append(newSb.toString().replaceAll(REGEXP, "</br>"));
 		sbuf.append("</td>").append(Strings.LINE_SEPARATOR);
-		
 
 		final Throwable throwable = event.getThrown();
 		if (throwable != null) {
@@ -183,9 +179,9 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 			appendThrowableAsHtml(throwable, sbuf);
 			sbuf.append("</td></tr>").append(Strings.LINE_SEPARATOR);
 		}
-		 
+
 		sbuf.append("</tr>").append(Strings.LINE_SEPARATOR);
-		
+
 		return sbuf.toString();
 	}
 
@@ -259,7 +255,7 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		appendLs(sbuf, "\"/>");
 		append(sbuf, "<title>").append(title);
 		appendLs(sbuf, "</title>");
-		if(!omitStyle) {
+		if (!omitStyle) {
 			appendLs(sbuf, "<style type=\"text/css\">");
 			appendLs(sbuf, "<!--");
 			append(sbuf, "body, table {font-family:").append(font).append("; font-size: ");
@@ -269,18 +265,18 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 			appendLs(sbuf, "</style>");
 			appendLs(sbuf, "</head>");
 			appendLs(sbuf, "<body bgcolor=\"#FFFFFF\" topmargin=\"6\" leftmargin=\"6\">");
-			appendLs(sbuf,
-					"<table "+ (tableCSSClass.isEmpty() ? "" : "class='"+tableCSSClass+"'") +" cellspacing=\"0\" cellpadding=\"4\" border=\"1\" bordercolor=\"#224466\" width=\"100%\">");
-		}else {
+			appendLs(sbuf, "<table " + (tableCSSClass.isEmpty() ? "" : "class='" + tableCSSClass + "'")
+					+ " cellspacing=\"0\" cellpadding=\"4\" border=\"1\" bordercolor=\"#224466\" width=\"100%\">");
+		} else {
 			appendLs(sbuf, "</head>");
-			appendLs(sbuf, "<table "+ (tableCSSClass.isEmpty() ? "" : "class='"+tableCSSClass+"'") +">");
+			appendLs(sbuf, "<table " + (tableCSSClass.isEmpty() ? "" : "class='" + tableCSSClass + "'") + ">");
 			appendLs(sbuf, "<body>");
 		}
 
 		appendLs(sbuf, "<tr>");
-		
-		for(String s: header) {
-			appendLs(sbuf,"<th>" + s + "</th>");
+
+		for (String s : header) {
+			appendLs(sbuf, "<th>" + s + "</th>");
 		}
 		appendLs(sbuf, "</tr>");
 		return sbuf.toString().getBytes(getCharset());
@@ -300,7 +296,6 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		return getBytes(sbuf.toString());
 	}
 
-	
 	/**
 	 * Creates an HTML Layout.
 	 * 
@@ -331,24 +326,22 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 			@PluginAttribute("fontSize") String fontSize,
 			@PluginAttribute(value = "fontName", defaultString = DEFAULT_FONT_FAMILY) final String font,
 			@PluginAttribute(value = "header") String header,
-			//Pattern Layout
+			// Pattern Layout
 			@PluginAttribute(value = "pattern", defaultString = DEFAULT_CONVERSION_PATTERN) final String pattern,
-            @PluginConfiguration final Configuration config,
-            // LOG4J2-783 use platform default by default, so do not specify defaultString for charset
-            @PluginAttribute(value = "alwaysWriteExceptions", defaultBoolean = false) final boolean alwaysWriteExceptions,
-            @PluginAttribute(value = "noConsoleNoAnsi") final boolean noConsoleNoAnsi
-			) {
+			@PluginConfiguration final Configuration config,
+			// LOG4J2-783 use platform default by default, so do not specify defaultString
+			// for charset
+			@PluginAttribute(value = "alwaysWriteExceptions", defaultBoolean = false) final boolean alwaysWriteExceptions,
+			@PluginAttribute(value = "noConsoleNoAnsi") final boolean noConsoleNoAnsi) {
 		final FontSize fs = FontSize.getFontSize(fontSize);
 		fontSize = fs.getFontSize();
 		final String headerSize = fs.larger().getFontSize();
 		if (contentType == null) {
 			contentType = DEFAULT_CONTENT_TYPE + "; charset=" + charset;
 		}
-		
-		
-		return new PatternHtmlLayout(title, contentType, charset, font, fontSize, headerSize,header,
-				config,pattern,alwaysWriteExceptions,false,noConsoleNoAnsi,omitStyle,tableCSSClass);
+
+		return new PatternHtmlLayout(title, contentType, charset, font, fontSize, headerSize, header, config, pattern,
+				alwaysWriteExceptions, false, noConsoleNoAnsi, omitStyle, tableCSSClass);
 	}
 
-	
 }
