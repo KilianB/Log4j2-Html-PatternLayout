@@ -102,11 +102,7 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		this.header = header.split(",");
 		this.omitStyle = omitStyle;
 		this.tableCSSClass = tableCSSClass == null ? "" : tableCSSClass;
-		// Remove quotes
-		this.header[0] = this.header[0].substring(1);
-		int length = this.header.length;
-		this.header[length - 1] = this.header[length - 1].substring(0, this.header[length - 1].length() - 1);
-
+		
 		this.pattern = eventPattern;
 
 		patternParser = new PatternParser(config, "Converter", LogEventPatternConverter.class);
