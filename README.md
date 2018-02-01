@@ -12,10 +12,10 @@ appender.fileAppender.type = File
 appender.fileAppender.name = LOGFILE
 appender.fileAppender.append = FALSE
 appender.fileAppender.layout.type = PatternHtmlLayout
-appender.fileAppender.layout.header = "Priority,Time,Sender,Message"
+appender.fileAppender.layout.header = Priority,Time,Sender,Message
 appender.fileAppender.layout.pattern = %p %td %d{HH:mm:ss} %td %c{1} %td %m
 appender.fileAppender.layout.omitStyle = TRUE
-appender.fileAppender.layout.tableCSSClass = "stripped highlight responsive-table"
+appender.fileAppender.layout.tableCSSClass = striped highlight responsive-table
 ```
 
 <table>
