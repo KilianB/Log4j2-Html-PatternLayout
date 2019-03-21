@@ -3,10 +3,35 @@
 Extends log4j2 HTMLLayout with the possibility to format strings using the syntax used in the pattern layout. 
 
 
+log4j2.xml
+
+```XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration packages="com.github.kilianB.log4j"
+	status="WARN">
+	<Appenders>
+		<File name="LOGFILE" fileName="logfile.html" append="false">
+			<PatternHtmlLayout
+				pattern="%p %td %d{HH:mm:ss} %td %c{1} %td %m"
+				header="Priority,Time,Sender,Message" omitStyle="true"
+				justTable = "true"
+				theadCSSClass= "thead-dark"
+				tableCSSClass="table table-striped" />
+		</File>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="LOGFILE" />
+		</Root>
+	</Loggers>
+</Configuration>
+```
+
+
 log4j2.properties example
 
 ```
-packages = de.ipatexi.logging
+packages = com.github.kilianB.log4j
 
 appender.fileAppender.type = File
 appender.fileAppender.name = LOGFILE
@@ -40,11 +65,26 @@ The new introduced <code>%td%</code> keyword symbolizes the start of a new table
   <td>TRUE | FALSE. Ignore the default styling of the original htmlLayout</td>
   <td>FALSE</td>
 </tr>
+
+<tr>
+  <td>justTable</td>
+  <td>TRUE | FALSE. Only print the table content to the file without html head/body markup. if true omitStyle is implied to be true</td>
+  <td>FALSE</td>
+</tr>
+
 <tr>
   <td>tableCSSClass</td>
-  <td>CSS class attached to the table tag. Usefull if embedded into page with external styles </td>
+  <td>CSS class attached to the table tag. Useful if embedded into page with external styles </td>
   <td></td>
 </tr>
+
+<tr>
+  <td>theadCSSClass</td>
+  <td>CSS class attached to the thead tag. Useful if embedded into page with external styles </td>
+  <td></td>
+</tr>
+
+
 <tr>
   <td>title</td>
   <td>title of the html page</td>

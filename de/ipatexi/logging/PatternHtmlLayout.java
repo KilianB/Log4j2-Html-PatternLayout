@@ -1,4 +1,4 @@
-package de.ipatexi.logging
+package com.github.kilianB.log4j;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -54,8 +54,13 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 
 	private final boolean omitStyle; // Ignore all styling options and return plain html;
 	private final String tableCSSClass; // Append class name to table tag
-
-	private String pattern;
+	private final String theadCSSClass;
+	
+	/**
+	 * Shall just the table be printed to file without <html markup?>
+	 */
+	private final boolean justTable; 
+	
 	private PatternParser patternParser;
 	private final PatternFormatter[] formatters;
 	private final boolean[] lineBreakFormater;
@@ -93,7 +98,7 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 			final String fontSize, final String headerSize, final String header,
 			// Pattern layout
 			final Configuration config, final String eventPattern, final boolean alwaysWriteExceptions,
-			final boolean disableAnsi, final boolean noConsoleNoAnsi, boolean omitStyle, String tableCSSClass) {
+			final boolean disableAnsi, final boolean noConsoleNoAnsi, boolean omitStyle, String tableCSSClass, boolean justTable, String theadCSSClass) {
 		super(charset);
 		this.title = title;
 		this.contentType = addCharsetToContentType(contentType);
@@ -102,8 +107,8 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		this.header = header.split(",");
 		this.omitStyle = omitStyle;
 		this.tableCSSClass = tableCSSClass == null ? "" : tableCSSClass;
-		
-		this.pattern = eventPattern;
+		this.justTable = justTable;
+		this.theadCSSClass = theadCSSClass == null ? "" : theadCSSClass;
 
 		patternParser = new PatternParser(config, "Converter", LogEventPatternConverter.class);
 		if (patternParser == null) {
@@ -176,7 +181,7 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 			sbuf.append("</td></tr>").append(Strings.LINE_SEPARATOR);
 		}
 
-		sbuf.append("</tr>").append(Strings.LINE_SEPARATOR);
+		sbuf.append("</tr>");
 
 		return sbuf.toString();
 	}
@@ -242,16 +247,20 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 	@Override
 	public byte[] getHeader() {
 		final StringBuilder sbuf = new StringBuilder();
-		append(sbuf, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" ");
-		appendLs(sbuf, "\"http://www.w3.org/TR/html4/loose.dtd\">");
-		appendLs(sbuf, "<html>");
-		appendLs(sbuf, "<head>");
-		append(sbuf, "<meta charset=\"");
-		append(sbuf, getCharset().toString());
-		appendLs(sbuf, "\"/>");
-		append(sbuf, "<title>").append(title);
-		appendLs(sbuf, "</title>");
-		if (!omitStyle) {
+		
+		if(!justTable) {
+			append(sbuf, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" ");
+			appendLs(sbuf, "\"http://www.w3.org/TR/html4/loose.dtd\">");
+			appendLs(sbuf, "<html>");
+			appendLs(sbuf, "<head>");
+			append(sbuf, "<meta charset=\"");
+			append(sbuf, getCharset().toString());
+			appendLs(sbuf, "\"/>");
+			append(sbuf, "<title>").append(title);
+			appendLs(sbuf, "</title>");
+		}
+		
+		if (!justTable && !omitStyle) {
 			appendLs(sbuf, "<style type=\"text/css\">");
 			appendLs(sbuf, "<!--");
 			append(sbuf, "body, table {font-family:").append(font).append("; font-size: ");
@@ -264,17 +273,22 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 			appendLs(sbuf, "<table " + (tableCSSClass.isEmpty() ? "" : "class='" + tableCSSClass + "'")
 					+ " cellspacing=\"0\" cellpadding=\"4\" border=\"1\" bordercolor=\"#224466\" width=\"100%\">");
 		} else {
-			appendLs(sbuf, "</head>");
-			appendLs(sbuf, "<table " + (tableCSSClass.isEmpty() ? "" : "class='" + tableCSSClass + "'") + ">");
+			if(!justTable) {
+				appendLs(sbuf, "</head>");
+			}
 			appendLs(sbuf, "<body>");
+			appendLs(sbuf, "<table " + (tableCSSClass.isEmpty() ? "" : "class='" + tableCSSClass + "'") + ">");
 		}
 
-		appendLs(sbuf, "<tr>");
-
+		appendLs(sbuf, "<thead " + (theadCSSClass.isEmpty() ? "" : "class='" + theadCSSClass + "'") + ">");
+		appendLs(sbuf,"<tr>");
+		
+		
 		for (String s : header) {
 			appendLs(sbuf, "<th>" + s + "</th>");
 		}
 		appendLs(sbuf, "</tr>");
+		appendLs(sbuf, "</thead>");
 		return sbuf.toString().getBytes(getCharset());
 	}
 
@@ -288,7 +302,9 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		final StringBuilder sbuf = new StringBuilder();
 		appendLs(sbuf, "</table>");
 		appendLs(sbuf, "<br>");
-		appendLs(sbuf, "</body></html>");
+		if(!justTable) {
+			appendLs(sbuf, "</body></html>");
+		}
 		return getBytes(sbuf.toString());
 	}
 
@@ -316,7 +332,10 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 	public static PatternHtmlLayout createLayout(
 			@PluginAttribute(value = "title", defaultString = DEFAULT_TITLE) final String title,
 			@PluginAttribute(value = "omitStyle", defaultBoolean = false) final boolean omitStyle,
+			@PluginAttribute(value = "justTable", defaultBoolean = false) final boolean justTable,
 			@PluginAttribute(value = "tableCSSClass") final String tableCSSClass,
+			@PluginAttribute(value = "theadCSSClass") final String theadCSSClass,
+			
 			@PluginAttribute("contentType") String contentType,
 			@PluginAttribute(value = "charset", defaultString = "UTF-8") final Charset charset,
 			@PluginAttribute("fontSize") String fontSize,
@@ -335,9 +354,8 @@ public class PatternHtmlLayout extends AbstractStringLayout {
 		if (contentType == null) {
 			contentType = DEFAULT_CONTENT_TYPE + "; charset=" + charset;
 		}
-
 		return new PatternHtmlLayout(title, contentType, charset, font, fontSize, headerSize, header, config, pattern,
-				alwaysWriteExceptions, false, noConsoleNoAnsi, omitStyle, tableCSSClass);
+				alwaysWriteExceptions, false, noConsoleNoAnsi, omitStyle, tableCSSClass,justTable,theadCSSClass);
 	}
 
 }

@@ -1,4 +1,4 @@
-package de.ipatexi.logging
+package com.github.kilianB.log4j;
 
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
